@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Анти ИИ Слепая зона</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: #000;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+        }
+
+        .screen {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            max-width: 450px;
+            max-height: 800px;
+            aspect-ratio: 9 / 16;
+            background: #000;
+            overflow: hidden;
+            margin: auto;
+        }
+
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            background: #000;
+            overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .page::-webkit-scrollbar { display: none; }
+        .page.active { display: block; }
+
+        .logo-bar {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(12px);
+            padding: 8px 20px;
+            border-radius: 60px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            pointer-events: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+        .logo-icon {
+            width: 24px;
+            height: 24px;
+            background-image: url('favicon.ico');
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+        .logo-text { 
+            font-weight: 700; 
+            font-size: 14px; 
+            background: linear-gradient(135deg, #fff, #27ae60);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .back-btn {
+            position: sticky;
+            top: 16px;
+            left: 16px;
+            z-index: 60;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 16px 0 0 16px;
+            transition: all 0.1s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
+        }
+        .back-btn:active { transform: scale(0.95); }
+
+        /* СТРАНИЦА 1: ЗАСТАВКА */
+        .layers { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .layers img, .layers video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        
+        .sound-btn {
+            position: absolute;
+            top: 18px;
+            left: 18px;
+            z-index: 30;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(12px);
+            border-radius: 60px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 12px 26px;
+            cursor: pointer;
+            display: flex;
+            gap: 12px;
+            font-weight: bold;
+            font-size: 1.4rem;
+            color: white;
+        }
+        .sound-btn:active { transform: scale(0.96); }
+
+        /* СТРАНИЦА 2: ПРОЕКТЫ */
+        .proj-list {
+            padding: 20px 16px 80px;
+            height: 100%;
+            overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .proj-list::-webkit-scrollbar { display: none; }
+        
+        .support-block {
+            background: rgba(26, 26, 46, 0.4);
+            backdrop-filter: blur(12px);
+            border-radius: 28px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(39, 174, 96, 0.4);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+        .support-block h3 { color: #f1c40f; font-size: 1.3rem; text-align: center; margin-bottom: 10px; }
+        .free-badge { text-align: center; color: #27ae60; font-weight: bold; margin-bottom: 12px; }
+        .support-text { color: #ccc; font-size: 0.9rem; text-align: center; margin-bottom: 20px; }
+        
+        .phone-row {
+            background: rgba(10, 10, 10, 0.5);
+            backdrop-filter: blur(8px);
+            padding: 14px;
+            border-radius: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 15px 0;
+            border: 1px solid #27ae60;
+        }
+        .phone-row span { font-size: 1.1rem; font-weight: bold; color: #27ae60; }
+        
+        .copy-phone-btn {
+            background: rgba(39, 174, 96, 0.3);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(39, 174, 96, 0.6);
+            padding: 8px 20px;
+            border-radius: 40px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+        .copy-phone-btn:active { transform: scale(0.95); }
+        
+        .support-note { font-size: 0.75rem; color: #888; text-align: center; margin-top: 12px; }
+        .support-thanks { text-align: center; color: #27ae60; margin-top: 12px; font-weight: bold; }
+        .other-projects-title { color: #fff; font-size: 1.2rem; margin: 20px 0 15px 0; border-left: 4px solid #27ae60; padding-left: 12px; }
+        
+        .proj-item {
+            padding: 14px;
+            background: rgba(17, 17, 17, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(39, 174, 96, 0.3);
+            border-radius: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            color: #fff;
+            font-weight: 600;
+            transition: all 0.1s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        .proj-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            transition: left 0.4s ease;
+        }
+        .proj-item:hover::before { left: 100%; }
+        .proj-item:active { background: #27ae60; color: #000; transform: scale(0.98); }
+        
+        .btn-trainer {
+            width: 100%;
+            padding: 14px;
+            background: rgba(39, 174, 96, 0.25);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(39, 174, 96, 0.6);
+            border-radius: 60px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #27ae60;
+            cursor: pointer;
+            margin-top: 30px;
+            transition: all 0.1s ease;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-trainer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+            transition: left 0.5s ease;
+        }
+        .btn-trainer:hover::before { left: 100%; }
+        .btn-trainer:active { transform: scale(0.97); }
+
+        /* СТРАНИЦА 3 */
+        .phone-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: #121212;
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+        .phone-container::-webkit-scrollbar { display: none; }
+        
+        .oscilloscope-wrapper {
+            width: 100%;
+            background: #000;
+            border-bottom: 2px solid #1e1e1e;
+        }
+        #oscilloscope { width: 100%; height: 60px; display: block; background: #000; }
+        
+        .stats-row { display: flex; gap: 12px; padding: 15px; width: 100%; }
+        .card { 
+            background: #1e1e1e; 
+            flex: 1; 
+            padding: 12px; 
+            border-radius: 16px; 
+            text-align: center; 
+            border-bottom: 4px solid #27ae60; 
+        }
+        .card-label { font-size: 0.7rem; color: #888; text-transform: uppercase; }
+        .card-value { display: block; font-size: 1.4rem; font-weight: 900; color: #27ae60; }
+        
+        #combo-badge { 
+            position: absolute; top: -10px; right: -5px; background: #f1c40f; color: black; 
+            padding: 2px 8px; border-radius: 10px; font-weight: 900; font-size: 0.65rem;
+            display: none; animation: pop 0.3s ease;
+        }
+        #best-combo-badge { font-size: 0.65rem; color: #f1c40f; margin-top: 3px; display: block; }
+        #difficulty-badge { font-size: 0.65rem; color: #888; margin-top: 3px; }
+
+        #drum-pad { 
+            width: 200px; height: 200px; border-radius: 50%; 
+            background: radial-gradient(circle, #444, #111); 
+            border: 8px solid #333; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            margin: 20px auto; 
+            cursor: pointer; 
+            transition: all 0.08s ease; 
+        }
+        #drum-pad.active { transform: scale(0.94); }
+        #drum-pad.combo-5 { border-color: #27ae60; box-shadow: 0 0 30px #27ae60; }
+        #drum-pad.combo-10 { border-color: #f1c40f; box-shadow: 0 0 50px #f1c40f; }
+        #drum-pad span { font-size: 2.5rem; }
+
+        .controls { width: 100%; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
+        
+        .toggle-row { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: rgba(30, 30, 30, 0.7);
+            backdrop-filter: blur(12px);
+            padding: 12px 16px; 
+            border-radius: 60px; 
+            border: 1px solid rgba(39, 174, 96, 0.4);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+        .toggle-row label { cursor: pointer; font-size: 0.9rem; color: #fff; }
+        
+        select { 
+            background: rgba(30, 30, 30, 0.7);
+            backdrop-filter: blur(12px);
+            color: white; 
+            border: 1px solid rgba(39, 174, 96, 0.4);
+            padding: 12px; 
+            border-radius: 60px; 
+            font-size: 0.9rem; 
+            cursor: pointer;
+        }
+        
+        .beats-row {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+        }
+        .beat-btn {
+            flex: 1;
+            background: rgba(30, 30, 30, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(39, 174, 96, 0.4);
+            border-radius: 40px;
+            padding: 10px 0;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #27ae60;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+        .beat-btn.active-beat {
+            background: rgba(39, 174, 96, 0.4);
+            border-color: #27ae60;
+            color: #fff;
+            box-shadow: 0 0 15px rgba(39,174,96,0.5);
+        }
+        .beat-btn:active { transform: scale(0.95); }
+        
+        .glass-btn {
+            background: rgba(39, 174, 96, 0.25);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(39, 174, 96, 0.6);
+            border-radius: 60px;
+            padding: 14px;
+            font-weight: bold;
+            font-size: 1rem;
+            color: #27ae60;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
+            position: relative;
+            overflow: hidden;
+        }
+        .glass-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+            transition: left 0.5s ease;
+        }
+        .glass-btn:hover::before { left: 100%; }
+        .glass-btn:active { transform: scale(0.97); }
+        .glass-btn.stop { background: rgba(231, 76, 60, 0.25); border-color: rgba(231, 76, 60, 0.6); color: #e74c3c; }
+        
+        .msg { height: 40px; font-weight: bold; font-size: 0.9rem; text-align: center; margin: 5px 0; display: flex; align-items: center; justify-content: center; }
+        .perfect { color: #f1c40f; }
+        .good { color: #27ae60; }
+        .hit { color: #3498db; }
+        .miss { color: #e74c3c; }
+
+        @keyframes pop { 0% { transform: scale(0.5); } 100% { transform: scale(1.2); } }
+    </style>
+</head>
+<body>
+<div class="screen">
+    <div class="logo-bar" id="logo" style="display: none;">
+        <div class="logo-icon"></div>
+        <span class="logo-text">Анти ИИ Слепая зона</span>
+    </div>
+
+    <!-- СТРАНИЦА 1 -->
+    <div id="p1" class="page active">
+        <div class="layers">
+            <img id="photo" src="frame.jpg" style="z-index:2">
+            <video id="video" src="cube.mp4" muted playsinline preload="auto" style="z-index:1"></video>
+        </div>
+        <button id="soundBtn" class="sound-btn"><span class="ico">🔇</span><span class="txt">Вкл звук</span></button>
+    </div>
+
+    <!-- СТРАНИЦА 2 -->
+    <div id="p2" class="page">
+        <button class="back-btn" onclick="goToPage('p1')">←</button>
+        <div class="proj-list">
+            <div class="support-block">
+                <h3>🤝 ПОДДЕРЖАТЬ ПРОЕКТ</h3>
+                <div class="free-badge">💙 Приложение бесплатное. Было и останется.</div>
+                <div class="support-text">Если проект помог вам — можете поддержать разработку добровольным переводом.</div>
+                <div class="phone-row">
+                    <span>📱 8-920-227-56-76</span>
+                    <button class="copy-phone-btn" onclick="copyPhoneNumber(event)">📋 Копировать</button>
+                </div>
+                <div class="support-note">✅ Деньги придут мгновенно. Без комиссии.</div>
+                <div class="support-thanks">❤️ Спасибо за поддержку!</div>
+            </div>
+            <div class="other-projects-title">🌟 ДРУГИЕ НАШИ ПРОЕКТЫ</div>
+            <div class="proj-item" onclick="openLink('https://anti-ai-shield.vercel.app/')">🛡️ Анти-ИИ Щит</div>
+            <div class="proj-item" onclick="openLink('https://anti-bullying-app-one.vercel.app/')">🏫 Защита от буллинга</div>
+            <div class="proj-item" onclick="openLink('https://anti-ai-animals.vercel.app/')">🐾 Животные поют</div>
+            <div class="proj-item" onclick="openLink('https://anti-ai-stress.vercel.app/')">🧘 Анти-ИИ Стресс</div>
+            <div class="proj-item" onclick="openLink('https://anti-ai-cosmos.vercel.app/')">✨ Анти ИИ Космос</div>
+            <div class="proj-item" onclick="openLink('https://anti-ai-auto.vercel.app/')">🚗 Анти ИИ Автомобиль</div>
+            <div class="proj-item" onclick="openLink('https://anti-ai-level.vercel.app/')">📐 Анти ИИ Уровень</div>
+            <div class="proj-item" onclick="openLink('https://anti-ai-barcode.vercel.app/')">📱 Анти ИИ Штрих-код</div>
+            <div class="proj-item" onclick="openLink('https://anti-ai-passwords.vercel.app/')">🔐 Анти ИИ Пароли</div>
+            <div class="proj-item" onclick="openLink('https://anti-ai-memory.vercel.app/')">🧠 Анти ИИ Память</div>
+            <div class="proj-item" onclick="openLink('https://rutube.ru/channel/24404224/')">✨ ВолшебствО</div>
+            <button class="btn-trainer" onclick="goToPage('p3')">🎵 ОТКРЫТЬ ТРЕНАЖЁР</button>
+        </div>
+    </div>
+
+    <!-- СТРАНИЦА 3 -->
+    <div id="p3" class="page">
+        <button class="back-btn" onclick="goToPage('p2')">←</button>
+        <div class="phone-container">
+            <div class="oscilloscope-wrapper">
+                <canvas id="oscilloscope"></canvas>
+            </div>
+
+            <div class="stats-row">
+                <div class="card"><div class="card-label">Точность</div><span id="accuracy" class="card-value">0%</span></div>
+                <div class="card">
+                    <div class="card-label">Дрейф</div>
+                    <span id="drift" class="card-value">0мс</span>
+                    <div id="combo-badge">🔥 x5</div>
+                    <span id="best-combo-badge"></span>
+                    <div id="difficulty-badge">🟡 Средняя</div>
+                </div>
+            </div>
+
+            <div id="drum-pad"><span>🥁</span></div>
+            <div id="msg" class="msg"></div>
+
+            <div class="controls">
+                <div class="toggle-row">
+                    <span style="color:#fff;">🔇 Слепой режим</span>
+                    <input type="checkbox" id="blind-mode">
+                </div>
+                
+                <div class="toggle-row">
+                    <span style="color:#fff;">🎯 Сложность</span>
+                    <select id="difficulty-select" style="background: rgba(30,30,30,0.7); color: white; border: 1px solid rgba(39,174,96,0.4); padding: 8px 16px; border-radius: 40px;">
+                        <option value="easy">🟢 Лёгкая</option>
+                        <option value="medium" selected>🟡 Средняя</option>
+                        <option value="hard">🔴 Сложная</option>
+                        <option value="pro">⚫ Профи</option>
+                    </select>
+                </div>
+                
+                <div class="beats-row">
+                    <button class="beat-btn" data-beats="2">2 такта</button>
+                    <button class="beat-btn" data-beats="4" style="background: rgba(39,174,96,0.4); border-color: #27ae60; color: #fff;">4 такта</button>
+                    <button class="beat-btn" data-beats="6">6 тактов</button>
+                    <button class="beat-btn" data-beats="8">8 тактов</button>
+                    <button class="beat-btn" data-beats="10">10 тактов</button>
+                </div>
+                
+                <select id="sound-select">
+                    <option value="kick">🥁 Kick Drum</option>
+                    <option value="snare">🎵 Snare</option>
+                    <option value="hihat">🔔 Hi-Hat</option>
+                    <option value="clap">👏 Clap</option>
+                    <option value="cowbell">🛎️ Cowbell</option>
+                </select>
+                <button id="start-btn" class="glass-btn">🎮 СТАРТ</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==================== НАВИГАЦИЯ ====================
+    let isTrainerRunning = false;
+    
+    function stopTrainerImmediately() {
+        if (isTrainerRunning) {
+            isTrainerRunning = false;
+            if (window.schedulerTimerID) clearTimeout(window.schedulerTimerID);
+            const startBtn = document.getElementById('start-btn');
+            if (startBtn) {
+                startBtn.innerText = '🎮 СТАРТ';
+                startBtn.classList.remove('stop');
+            }
+        }
+    }
+    
+    function goToPage(id) {
+        if (id !== 'p3') stopTrainerImmediately();
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        const logo = document.getElementById('logo');
+        if (id === 'p1') logo.style.display = 'none';
+        else logo.style.display = 'flex';
+        if (id === 'p3') setTimeout(() => {
+            const canvas = document.getElementById('oscilloscope');
+            if (canvas) {
+                const container = document.querySelector('.oscilloscope-wrapper');
+                if (container) { canvas.width = container.clientWidth; canvas.height = 60; }
+            }
+        }, 100);
+    }
+
+    function openLink(url) { window.open(url, '_blank'); }
+    function copyPhoneNumber(event) {
+        const phone = "8-920-227-56-76";
+        navigator.clipboard.writeText(phone).then(() => {
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = "✅ Скопировано!";
+            setTimeout(() => btn.innerText = originalText, 1500);
+        });
+    }
+
+    // ==================== ЗАСТАВКА ====================
+    (function initSplash() {
+        const photo = document.getElementById('photo');
+        const video = document.getElementById('video');
+        const btn = document.getElementById('soundBtn');
+        const ico = btn.querySelector('.ico');
+        const txt = btn.querySelector('.txt');
+        let soundOn = false;
+        let videoStarted = false;
+        video.muted = true;
+        
+        function updateBtn() {
+            if (soundOn) { ico.innerText = '🔊'; txt.innerText = 'Звук вкл'; }
+            else { ico.innerText = '🔇'; txt.innerText = 'Вкл звук'; }
+        }
+        
+        btn.onclick = () => {
+            if (soundOn) { video.muted = true; soundOn = false; }
+            else { video.muted = false; soundOn = true; if (videoStarted && video.paused) video.play(); }
+            updateBtn();
+        };
+        
+        function switchToVideoAndNext() {
+            if (videoStarted) return;
+            videoStarted = true;
+            video.style.zIndex = '2';
+            photo.style.zIndex = '1';
+            video.play();
+            setTimeout(() => { goToPage('p2'); }, 3000);
+        }
+        
+        setTimeout(switchToVideoAndNext, 2000);
+        if (photo.complete && photo.naturalWidth > 0) setTimeout(switchToVideoAndNext, 2000);
+        else photo.onload = () => setTimeout(switchToVideoAndNext, 2000);
+        updateBtn();
+    })();
+
+    // ==================== СТРАНИЦА 3 ====================
+    
+    // РИТМИЧЕСКИЕ ПАТТЕРНЫ (в долях такта, 1 = удар)
+    const rhythmPatterns = {
+        2: [1, 2, 3, 4],
+        4: [1, 2.5, 3, 4],
+        6: [1, 1.5, 2, 2.5, 3, 3.5, 4],
+        8: [1, 1.75, 2.25, 3, 3.5, 4],
+        10: [1, 2.33, 2.66, 4]
+    };
+    
+    const canvas = document.getElementById('oscilloscope');
+    let ctx = canvas ? canvas.getContext('2d') : null;
+    const accuracySpan = document.getElementById('accuracy');
+    const driftSpan = document.getElementById('drift');
+    const msgDiv = document.getElementById('msg');
+    const drumPad = document.getElementById('drum-pad');
+    const startBtn = document.getElementById('start-btn');
+    const blindCheckbox = document.getElementById('blind-mode');
+    const soundSelect = document.getElementById('sound-select');
+    const comboBadge = document.getElementById('combo-badge');
+    const bestComboSpan = document.getElementById('best-combo-badge');
+
+    let audioCtx = null;
+    let analyzer = null;
+    let isRunning = false;
+    let bpm = 120;
+    let nextNoteTime = 0;
+    let timerID = null;
+    let lastTickTime = 0;
+    let tickCount = 0;
+    let isBlind = false;
+    let selectedBeats = 4;
+    let currentPattern = rhythmPatterns[4];
+    
+    let totalScore = 0;
+    let totalHits = 0;
+    let combo = 0;
+    let bestCombo = parseInt(localStorage.getItem('bestCombo')) || 0;
+    if (bestComboSpan) bestComboSpan.innerText = `🏆 x${bestCombo}`;
+    
+    // НАСТРОЙКИ СЛОЖНОСТИ (допуски в мс)
+    const difficultySettings = {
+        easy:   { perfect: 120, good: 180, hit: 250 },
+        medium: { perfect: 80,  good: 140, hit: 220 },
+        hard:   { perfect: 50,  good: 100, hit: 180 },
+        pro:    { perfect: 30,  good: 70,  hit: 150 }
+    };
+    
+    const soundParams = {
+        kick: { freq: 60, decay: 0.4 },
+        snare: { freq: 200, decay: 0.2 },
+        hihat: { freq: 8000, decay: 0.05 },
+        clap: { freq: 500, decay: 0.1 },
+        cowbell: { freq: 800, decay: 0.2 }
+    };
+    
+    function updateDifficultyBadge() {
+        const badge = document.getElementById('difficulty-badge');
+        if (!badge) return;
+        const difficulty = document.getElementById('difficulty-select').value;
+        const icons = { easy: '🟢', medium: '🟡', hard: '🔴', pro: '⚫' };
+        const names = { easy: 'Лёгкая', medium: 'Средняя', hard: 'Сложная', pro: 'Профи' };
+        badge.innerText = `${icons[difficulty]} ${names[difficulty]}`;
+    }
+    
+    function initAudio() {
+        if (audioCtx) return audioCtx;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        analyzer = audioCtx.createAnalyser();
+        analyzer.fftSize = 2048;
+        analyzer.connect(audioCtx.destination);
+        startOscilloscope();
+        return audioCtx;
+    }
+    
+    function playSingleSound(time, isMetro = true) {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.setValueAtTime(isMetro ? 800 : 150, time);
+        gain.gain.setValueAtTime(0.12, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
+        osc.connect(gain);
+        gain.connect(analyzer);
+        osc.start(time);
+        osc.stop(time + 0.08);
+    }
+    
+    function playRhythmDemo(beatsCount) {
+        initAudio();
+        const pattern = rhythmPatterns[beatsCount];
+        if (!pattern) return;
+        
+        const resumeAudio = () => {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume().then(() => actuallyPlayRhythm(pattern, beatsCount));
+            } else {
+                actuallyPlayRhythm(pattern, beatsCount);
+            }
+        };
+        resumeAudio();
+    }
+    
+    function actuallyPlayRhythm(pattern, beatsCount) {
+        const startTime = audioCtx.currentTime + 0.2;
+        const beatDuration = 60 / bpm;
+        
+        pattern.forEach((beatPos) => {
+            const time = startTime + (beatPos - 1) * beatDuration;
+            setTimeout(() => {
+                if (audioCtx) {
+                    playSingleSound(audioCtx.currentTime, true);
+                }
+                const btns = document.querySelectorAll('.beat-btn');
+                btns.forEach(btn => btn.style.transform = 'scale(0.95)');
+                setTimeout(() => btns.forEach(btn => btn.style.transform = ''), 100);
+            }, (time - audioCtx.currentTime) * 1000);
+        });
+        
+        const duration = (Math.max(...pattern) - 1) * beatDuration * 1000;
+        msgDiv.innerHTML = `<span style="color:#27ae60">🎵 ДЕМО: ${beatsCount} тактов (ритмический рисунок)</span>`;
+        setTimeout(() => {
+            if (msgDiv.innerHTML.includes('ДЕМО')) msgDiv.innerHTML = '';
+        }, duration + 500);
+    }
+    
+    const beatBtns = document.querySelectorAll('.beat-btn');
+    beatBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const beats = parseInt(btn.getAttribute('data-beats'));
+            selectedBeats = beats;
+            currentPattern = rhythmPatterns[beats];
+            
+            beatBtns.forEach(b => {
+                b.classList.remove('active-beat');
+                b.style.background = 'rgba(30, 30, 30, 0.7)';
+                b.style.borderColor = 'rgba(39, 174, 96, 0.4)';
+                b.style.color = '#27ae60';
+            });
+            btn.classList.add('active-beat');
+            btn.style.background = 'rgba(39, 174, 96, 0.4)';
+            btn.style.borderColor = '#27ae60';
+            btn.style.color = '#fff';
+            
+            playRhythmDemo(beats);
+        });
+    });
+    
+    function playDrumSound() {
+        if (!audioCtx) return;
+        const style = soundSelect.value;
+        const params = soundParams[style] || soundParams.kick;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(params.freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + params.decay);
+        osc.connect(gain);
+        gain.connect(analyzer);
+        osc.start();
+        osc.stop(audioCtx.currentTime + params.decay);
+    }
+    
+    function startOscilloscope() {
+        let dataArray = new Uint8Array(2048);
+        function draw() {
+            if (!analyzer || !ctx || !document.getElementById('p3').classList.contains('active')) {
+                requestAnimationFrame(draw);
+                return;
+            }
+            analyzer.getByteTimeDomainData(dataArray);
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
+            ctx.strokeStyle = '#27ae60';
+            ctx.lineWidth = 2;
+            let sliceWidth = canvas.width / dataArray.length;
+            let x = 0;
+            for (let i = 0; i < dataArray.length; i++) {
+                let v = dataArray[i] / 128.0;
+                let y = v * canvas.height / 2;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+                x += sliceWidth;
+            }
+            ctx.stroke();
+            requestAnimationFrame(draw);
+        }
+        draw();
+    }
+    
+    let startTime = 0;
+    
+    function scheduler() {
+        if (!isRunning) return;
+        
+        const now = audioCtx.currentTime;
+        const beatDuration = 60 / bpm;
+        
+        while (nextNoteTime < now + 0.1) {
+            lastTickTime = nextNoteTime;
+            tickCount++;
+            
+            const timeSinceStart = nextNoteTime - startTime;
+            const beatPosition = (timeSinceStart % (4 * beatDuration)) / beatDuration + 1;
+            
+            let shouldPlay = false;
+            for (let i = 0; i < currentPattern.length; i++) {
+                if (Math.abs(currentPattern[i] - beatPosition) < 0.05) {
+                    shouldPlay = true;
+                    break;
+                }
+            }
+            
+            if (isBlind && tickCount > selectedBeats * 4) {
+                if (tickCount === selectedBeats * 4 + 1 && msgDiv) {
+                    msgDiv.innerHTML = `<span style="color:#e74c3c">🔇 СЛЕПОЙ РЕЖИМ (${selectedBeats} тактов) | ДЕРЖИ РИТМ!</span>`;
+                    setTimeout(() => {
+                        if (msgDiv.innerHTML.includes("СЛЕПОЙ РЕЖИМ")) msgDiv.innerHTML = '';
+                    }, 2000);
+                }
+            } else {
+                if (shouldPlay) {
+                    playMetroSound(nextNoteTime);
+                }
+            }
+            
+            nextNoteTime += beatDuration;
+        }
+        timerID = setTimeout(scheduler, 25);
+        window.schedulerTimerID = timerID;
+    }
+    
+    function playMetroSound(time) {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.setValueAtTime(800, time);
+        gain.gain.setValueAtTime(0.08, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
+        osc.connect(gain);
+        gain.connect(analyzer);
+        osc.start(time);
+        osc.stop(time + 0.05);
+    }
+    
+    function playLevelUpSound(isGold) {
+        if (!audioCtx) return;
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.setValueAtTime(isGold ? 880 : 440, now);
+        osc.frequency.exponentialRampToValueAtTime(isGold ? 1760 : 880, now + 0.2);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        osc.connect(gain);
+        gain.connect(analyzer);
+        osc.start();
+        osc.stop(now + 0.3);
+    }
+    
+    function updateCombo(newCombo) {
+        combo = newCombo;
+        if (combo >= 5 && comboBadge) {
+            comboBadge.style.display = 'block';
+            comboBadge.innerText = `🔥 x${combo}`;
+            comboBadge.style.animation = 'none';
+            setTimeout(() => comboBadge.style.animation = 'pop 0.3s ease', 10);
+            if (combo === 5) playLevelUpSound(false);
+            else if (combo === 10) playLevelUpSound(true);
+            if (combo >= 10 && drumPad) drumPad.className = 'combo-10';
+            else if (drumPad) drumPad.className = 'combo-5';
+        } else if (comboBadge) {
+            comboBadge.style.display = 'none';
+            if (drumPad) drumPad.className = '';
+        }
+        if (combo > bestCombo) {
+            bestCombo = combo;
+            localStorage.setItem('bestCombo', bestCombo);
+            if (bestComboSpan) bestComboSpan.innerText = `🏆 x${bestCombo}`;
+        }
+    }
+    
+    function handleTap() {
+        if (!audioCtx) return;
+        playDrumSound();
+        if ("vibrate" in navigator) navigator.vibrate(10);
+        if (drumPad) {
+            drumPad.classList.add('active');
+            setTimeout(() => drumPad.classList.remove('active'), 60);
+        }
+        if (!isRunning) return;
+        
+        const now = audioCtx.currentTime;
+        const diff = Math.abs(now - lastTickTime) * 1000;
+        
+        const difficulty = document.getElementById('difficulty-select').value;
+        const limits = difficultySettings[difficulty];
+        
+        let points = 0, feedback = '', color = '';
+        
+        if (diff < limits.perfect) { 
+            points = 100; 
+            feedback = '🎯 ИДЕАЛЬНО!'; 
+            color = 'perfect'; 
+            updateCombo(combo + 1); 
+        }
+        else if (diff < limits.good) { 
+            points = 70; 
+            feedback = '👍 ХОРОШО'; 
+            color = 'good'; 
+            updateCombo(0); 
+        }
+        else if (diff < limits.hit) { 
+            points = 40; 
+            feedback = '⚡ ПОПАЛ'; 
+            color = 'hit'; 
+            updateCombo(0); 
+        }
+        else { 
+            points = 0; 
+            feedback = '😅 МИМО'; 
+            color = 'miss'; 
+            updateCombo(0); 
+        }
+        
+        totalHits++; 
+        totalScore += points;
+        const accuracy = Math.round(totalScore / totalHits);
+        if (accuracySpan) accuracySpan.innerText = accuracy + '%';
+        if (driftSpan) driftSpan.innerText = Math.round(diff) + 'мс';
+        if (msgDiv) {
+            msgDiv.innerHTML = `<span class="${color}">${feedback}</span>`;
+            setTimeout(() => { if (msgDiv.innerHTML.includes(feedback)) msgDiv.innerHTML = ''; }, 500);
+        }
+    }
+    
+    function startStop() {
+        if (isRunning) {
+            // Остановка
+            isRunning = false;
+            isTrainerRunning = false;
+            if (timerID) clearTimeout(timerID);
+            if (startBtn) {
+                startBtn.innerText = '🎮 СТАРТ';
+                startBtn.classList.remove('stop');
+            }
+            if (msgDiv) msgDiv.innerHTML = '<span style="color:#888">✅ Тренировка завершена</span>';
+            return;
+        }
+        
+        initAudio();
+        
+        const resumeAndStart = () => {
+            isRunning = true;
+            isTrainerRunning = true;
+            tickCount = 0;
+            totalScore = 0;
+            totalHits = 0;
+            combo = 0;
+            updateCombo(0);
+            if (accuracySpan) accuracySpan.innerText = '0%';
+            if (driftSpan) driftSpan.innerText = '0мс';
+            if (msgDiv) msgDiv.innerHTML = '';
+            isBlind = blindCheckbox ? blindCheckbox.checked : false;
+            startTime = audioCtx.currentTime + 0.1;
+            nextNoteTime = startTime;
+            lastTickTime = nextNoteTime;
+            scheduler();
+            if (startBtn) {
+                startBtn.innerText = '⏹️ СТОП';
+                startBtn.classList.add('stop');
+            }
+            
+            const difficultyNames = { easy: '🟢 Лёгкая', medium: '🟡 Средняя', hard: '🔴 Сложная', pro: '⚫ Профи' };
+            const currentDifficulty = difficultyNames[document.getElementById('difficulty-select').value];
+            msgDiv.innerHTML = `<span style="color:#27ae60">🎵 РИТМ: ${selectedBeats} тактов | 🎯 ${currentDifficulty}</span>`;
+            setTimeout(() => {
+                if (msgDiv.innerHTML.includes('РИТМ')) msgDiv.innerHTML = '';
+            }, 2500);
+        };
+        
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume().then(resumeAndStart);
+        } else {
+            resumeAndStart();
+        }
+    }
+    
+    if (startBtn) startBtn.onclick = startStop;
+    if (drumPad) drumPad.onpointerdown = (e) => { e.preventDefault(); handleTap(); };
+    window.onkeydown = (e) => { if (e.code === 'Space') { e.preventDefault(); handleTap(); } };
+    
+    function resizeCanvas() {
+        if (canvas) {
+            const container = document.querySelector('.oscilloscope-wrapper');
+            if (container && container.clientWidth > 0) { 
+                canvas.width = container.clientWidth; 
+                canvas.height = 60; 
+            }
+        }
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('orientationchange', resizeCanvas);
+    setTimeout(resizeCanvas, 100);
+    
+    document.body.addEventListener('touchstart', () => {
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    }, { once: true });
+    
+    document.getElementById('difficulty-select').addEventListener('change', updateDifficultyBadge);
+    setTimeout(updateDifficultyBadge, 100);
+    
+    if ('serviceWorker' in navigator) {
+        const swCode = `const CACHE='drum-v9';self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.add(location.href))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
+        const blob = new Blob([swCode], { type: 'text/javascript' });
+        navigator.serviceWorker.register(URL.createObjectURL(blob));
+    }
+    
+    resizeCanvas();
+    initAudio();
+</script>
+</body>
+</html>

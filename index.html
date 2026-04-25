@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#27ae60">
+    <meta name="description" content="Тренажёр ритма — развивай чувство времени и координацию">
+    <title>Анти ИИ Слепая зона</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <style>
+        /* ==================== БАЗОВЫЕ СТИЛИ ==================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        body {
+            background: #000;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            color: #fff;
+            overscroll-behavior: none;
+        }
+
+        .screen {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            max-width: 450px;
+            max-height: 800px;
+            aspect-ratio: 9 / 16;
+            background: #000;
+            overflow: hidden;
+            margin: auto;
+            contain: layout style;
+        }
+
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            background: #000;
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+        .page::-webkit-scrollbar { display: none; }
+        .page.active { display: block; }
+
+        /* ==================== ЛОГОТИП ==================== */
+        .logo-bar {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(12px);
+            padding: 8px 20px;
+            border-radius: 60px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            pointer-events: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+        .logo-icon {
+            width: 24px;
+            height: 24px;
+            background-image: url('favicon.ico');
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+        .logo-text { 
+            font-weight: 700; 
+            font-size: 14px; 
+            color: #fff;
+            background: linear-gradient(135deg, #fff, #27ae60);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+
+        /* ==================== КНОПКА НАЗАД ==================== */
+        .back-btn {
+            position: sticky;
+            top: 16px;
+            left: 16px;
+            z-index: 60;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.1s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
+        }
+        .back-btn:active { transform: scale(0.95); }
+
+        /* ==================== СТРАНИЦА 1: ЗАСТАВКА ==================== */
+        .layers { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .layers img, .layers video { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+        }
+        
+        .sound-btn {
+            position: absolute;
+            top: 18px;
+            left: 18px;
+            z-index: 30;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(12px);
+            border-radius: 60px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 12px 26px;
+            cursor: pointer;
+            display: flex;
+            gap: 12px;
+            font-weight: bold;
+            font-size: 1.4rem;
+            color: white;
+            transition: transform 0.1s ease;
+        }
+        .sound-btn:active { transform: scale(0.96); }
+
+        /* ==================== СТРАНИЦА 2: ПРОЕКТЫ ==================== */
+        .proj-list {
+            padding: 20px 16px 80px;
+            height: 100%;
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+        .proj-list::-webkit-scrollbar { display: none; }
+        
+        .support-block {
+            background: rgba(26, 26, 46, 0.4);
+            backdrop-filter: blur(12px);
+            border-radius: 28px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(39, 174, 96, 0.4);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+        .support-block h3 { color: #f1c40f; font-size: 1.3rem; text-align: center; margin-bottom: 10px; }
+        .free-badge { text-align: center; color: #27ae60; font-weight: bold; margin-bottom: 12px; }
+        .support-text { color: #ccc; font-size: 0.9rem; text-align: center; margin-bottom: 20px; }
+        
+        .phone-row {
+            background: rgba(10, 10, 10, 0.5);
+            backdrop-filter: blur(8px);
+            padding: 14px;
+            border-radius: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 15px 0;
+            border: 1px solid #27ae60;
+        }
+        .phone-row span { font-size: 1.1rem; font-weight: bold; color: #27ae60; word-break: break-all; }
+        
+        .copy-phone-btn {
+            background: rgba(39, 174, 96, 0.3);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(39, 174, 96, 0.6);
+            padding: 8px 20px;
+            border-radius: 40px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+            transition: transform 0.1s ease;
+        }
+        .copy-phone-btn:active { transform: scale(0.95); }
+        
+        .support-note { font-size: 0.75rem; color: #888; text-align: center; margin-top: 12px; }
+        .support-thanks { text-align: center; color: #27ae60; margin-top: 12px; font-weight: bold; }
+        .other-projects-title { color: #fff; font-size: 1.2rem; margin: 20px 0 15px 0; border-left: 4px solid #27ae60; padding-left: 12px; }
+        
+        .proj-item {
+            padding: 14px;
+            background: rgba(17, 17, 17, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(39, 174, 96, 0.3);
+            border-radius: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            color: #fff;
+            font-weight: 600;
+            transition: all 0.1s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        .proj-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            transition: left 0.4s ease;
+        }
+        .proj-item:hover::before { left: 100%; }
+        .proj-item:active { background: #27ae60; color: #000; transform: scale(0.98); }
+        
+        .btn-trainer {
+            width: 100%;
+            padding: 14px;
+            background: rgba(39, 174, 96, 0.25);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(39, 174, 96, 0.6);
+            border-radius: 60px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #27ae60;
+            cursor: pointer;
+            margin-top: 30px;
+            transition: all 0.1s ease;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-trainer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+            transition: left 0.5s ease;
+        }
+        .btn-trainer:hover::before { left: 100%; }
+        .btn-trainer:active { transform: scale(0.97); }
+
+        /* ==================== СТРАНИЦА 3: ТРЕНАЖЁР ==================== */
+        .phone-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: #121212;
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+        .phone-container::-webkit-scrollbar { display: none; }
+        
+        .oscilloscope-wrapper {
+            width: 100%;
+            background: #000;
+            border-bottom: 2px solid #1e1e1e;
+        }
+        #oscilloscope { width: 100%; height: 60px; display: block; background: #000; }
+        
+        .stats-row { display: flex; gap: 12px; padding: 15px; width: 100%; }
+        .card { 
+            background: #1e1e1e; 
+            flex: 1; 
+            padding: 12px; 
+            border-radius: 16px; 
+            text-align: center; 
+            border-bottom: 4px solid #27ae60; 
+            position: relative;
+        }
+        .card-label { font-size: 0.7rem; color: #888; text-transform: uppercase; }
+        .card-value { display: block; font-size: 1.4rem; font-weight: 900; color: #27ae60; }
+        
+        #combo-badge { 
+            position: absolute; top: -10px; right: -5px; background: #f1c40f; color: black; 
+            padding: 2px 8px; border-radius: 10px; font-weight: 900; font-size: 0.65rem;
+            display: none; animation: pop 0.3s ease;
+        }
+        #best-combo-badge { font-size: 0.65rem; color: #f1c40f; margin-top: 3px; display: block; }
+        #difficulty-badge { font-size: 0.65rem; color: #888; margin-top: 3px; }
+
+        #drum-pad { 
+            width: 200px; height: 200px; border-radius: 50%; 
+            background: radial-gradient(circle at 30% 30%, #555, #222); 
+            border: 8px solid #333; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            margin: 20px auto; 
+            cursor: pointer; 
+            transition: transform 0.08s ease, border-color 0.2s ease, box-shadow 0.2s ease; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4), inset 0 2px 10px rgba(255,255,255,0.1);
+            position: relative;
+        }
+        #drum-pad::after {
+            content: '';
+            position: absolute;
+            top: 10%; left: 10%; width: 80%; height: 80%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1), transparent 60%);
+            pointer-events: none;
+        }
+        #drum-pad.active { transform: scale(0.94); }
+        #drum-pad.combo-5 { 
+            border-color: #27ae60; 
+            box-shadow: 0 0 30px rgba(39,174,96,0.6), inset 0 2px 10px rgba(255,255,255,0.2); 
+        }
+        #drum-pad.combo-10 { 
+            border-color: #f1c40f; 
+            box-shadow: 0 0 50px rgba(241,196,15,0.7), inset 0 2px 10px rgba(255,255,255,0.2); 
+        }
+        #drum-pad span { font-size: 2.5rem; pointer-events: none; }
+
+        .controls { width: 100%; padding: 15px; display: flex; flex-direction: column; gap: 12px; padding-bottom: 30px; }
+        
+        .toggle-row { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: rgba(30, 30, 30, 0.7);
+            backdrop-filter: blur(12px);
+            padding: 12px 16px; 
+            border-radius: 60px; 
+            border: 1px solid rgba(39, 174, 96, 0.4);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+        .toggle-row label { cursor: pointer; font-size: 0.9rem; color: #fff; display: flex; align-items: center; gap: 8px; }
+        
+        select { 
+            background: rgba(30, 30, 30, 0.7);
+            backdrop-filter: blur(12px);
+            color: white; 
+            border: 1px solid rgba(39, 174, 96, 0.4);
+            padding: 12px 20px; 
+            border-radius: 60px; 
+            font-size: 0.9rem; 
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2327ae60' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 40px;
+        }
+        /* Цветовая индикация сложности в select */
+        select option[value="easy"] { background: #27ae60; color: #000; }
+        select option[value="medium"] { background: #f1c40f; color: #000; }
+        select option[value="hard"] { background: #e74c3c; color: #fff; }
+        select option[value="pro"] { background: #000; color: #f1c40f; }
+        
+        .beats-row { display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
+        .beat-btn {
+            flex: 1; min-width: 60px;
+            background: rgba(30, 30, 30, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(39, 174, 96, 0.4);
+            border-radius: 40px;
+            padding: 10px 4px;
+            font-size: 0.8rem; font-weight: bold; color: #27ae60;
+            cursor: pointer; transition: all 0.1s ease; text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+        .beat-btn.active-beat {
+            background: rgba(39, 174, 96, 0.4);
+            border-color: #27ae60; color: #fff;
+            box-shadow: 0 0 15px rgba(39,174,96,0.5);
+        }
+        .beat-btn:active { transform: scale(0.95); }
+        
+        .glass-btn {
+            background: rgba(39, 174, 96, 0.25);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(39, 174, 96, 0.6);
+            border-radius: 60px;
+            padding: 14px;
+            font-weight: bold; font-size: 1rem; color: #27ae60;
+            cursor: pointer; transition: all 0.1s ease;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
+            position: relative; overflow: hidden;
+        }
+        .glass-btn::before {
+            content: ''; position: absolute; top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+            transition: left 0.5s ease;
+        }
+        .glass-btn:hover::before { left: 100%; }
+        .glass-btn:active { transform: scale(0.97); }
+        .glass-btn.stop { 
+            background: rgba(231, 76, 60, 0.25); 
+            border-color: rgba(231, 76, 60, 0.6); 
+            color: #e74c3c; 
+        }
+        
+        .msg { 
+            height: 40px; font-weight: bold; font-size: 0.9rem; 
+            text-align: center; margin: 5px 0; 
+            display: flex; align-items: center; justify-content: center; 
+            min-height: 40px;
+        }
+        .perfect { color: #f1c40f; text-shadow: 0 0 10px rgba(241,196,15,0.5); }
+        .good { color: #27ae60; }
+        .hit { color: #3498db; }
+        .miss { color: #e74c3c; }
+
+        @keyframes pop { 
+            0% { transform: scale(0.5); opacity: 0; } 
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; } 
+        }
+    </style>
+</head>
+<body>
+<div class="screen">
+    <div class="logo-bar" id="logo" style="display: none;">
+        <div class="logo-icon"></div>
+        <span class="logo-text">Анти ИИ Слепая зона</span>
+    </div>
+
+    <!-- СТРАНИЦА 1 -->
+    <div id="p1" class="page active">
+        <div class="layers">
+            <img id="photo" src="frame.jpg" alt="" style="z-index:2">
+            <video id="video" src="cube.mp4" muted playsinline preload="none" loading="lazy" style="z-index:1"></video>
+        </div>
+        <button id="soundBtn" class="sound-btn">
+            <span class="ico">🔇</span><span class="txt">Вкл звук</span>
+        </button>
+    </div>
+
+    <!-- СТРАНИЦА 2 -->
+    <div id="p2" class="page">
+        <button class="back-btn" onclick="app.goToPage('p1')">←</button>
+        <div class="proj-list">
+            <div class="support-block">
+                <h3>🤝 ПОДДЕРЖАТЬ ПРОЕКТ</h3>
+                <div class="free-badge">💙 Приложение бесплатное. Было и останется.</div>
+                <div class="support-text">Если проект помог вам — можете поддержать разработку добровольным переводом.</div>
+                <div class="phone-row">
+                    <span>📱 8-920-227-56-76</span>
+                    <button class="copy-phone-btn" onclick="app.copyPhoneNumber(event)">📋 Копировать</button>
+                </div>
+                <div class="support-note">✅ Деньги придут мгновенно. Без комиссии.</div>
+                <div class="support-thanks">❤️ Спасибо за поддержку!</div>
+            </div>
+            <div class="other-projects-title">🌟 ДРУГИЕ НАШИ ПРОЕКТЫ</div>
+            <div class="proj-item" onclick="app.openLink('https://anti-ai-shield.vercel.app/')">🛡️ Анти-ИИ Щит</div>
+            <div class="proj-item" onclick="app.openLink('https://anti-bullying-app-one.vercel.app/')">🏫 Защита от буллинга</div>
+            <div class="proj-item" onclick="app.openLink('https://anti-ai-animals.vercel.app/')">🐾 Животные поют</div>
+            <div class="proj-item" onclick="app.openLink('https://anti-ai-stress.vercel.app/')">🧘 Анти-ИИ Стресс</div>
+            <div class="proj-item" onclick="app.openLink('https://anti-ai-cosmos.vercel.app/')">✨ Анти ИИ Космос</div>
+            <div class="proj-item" onclick="app.openLink('https://anti-ai-auto.vercel.app/')">🚗 Анти ИИ Автомобиль</div>
+            <div class="proj-item" onclick="app.openLink('https://anti-ai-level.vercel.app/')">📐 Анти ИИ Уровень</div>
+            <div class="proj-item" onclick="app.openLink('https://anti-ai-barcode.vercel.app/')">📱 Анти ИИ Штрих-код</div>
+            <div class="proj-item" onclick="app.openLink('https://anti-ai-passwords.vercel.app/')">🔐 Анти ИИ Пароли</div>
+            <div class="proj-item" onclick="app.openLink('https://anti-ai-memory.vercel.app/')">🧠 Анти ИИ Память</div>
+            <div class="proj-item" onclick="app.openLink('https://rutube.ru/channel/24404224/')">✨ ВолшебствО</div>
+            <button class="btn-trainer" onclick="app.goToPage('p3')">🎵 ОТКРЫТЬ ТРЕНАЖЁР</button>
+        </div>
+    </div>
+
+    <!-- СТРАНИЦА 3 -->
+    <div id="p3" class="page">
+        <button class="back-btn" onclick="app.goToPage('p2')">←</button>
+        <div class="phone-container">
+            <div class="oscilloscope-wrapper">
+                <canvas id="oscilloscope"></canvas>
+            </div>
+
+            <div class="stats-row">
+                <div class="card"><div class="card-label">Точность</div><span id="accuracy" class="card-value">0%</span></div>
+                <div class="card">
+                    <div class="card-label">Дрейф</div>
+                    <span id="drift" class="card-value">0мс</span>
+                    <div id="combo-badge">🔥 x5</div>
+                    <span id="best-combo-badge"></span>
+                    <div id="difficulty-badge">🟡 Средняя</div>
+                </div>
+            </div>
+
+            <div id="drum-pad"><span>🥁</span></div>
+            <div id="msg" class="msg"></div>
+
+            <div class="controls">
+                <div class="toggle-row">
+                    <span>🔇 Слепой режим</span>
+                    <input type="checkbox" id="blind-mode">
+                </div>
+                
+                <div class="toggle-row">
+                    <span>🎯 Сложность</span>
+                    <select id="difficulty-select">
+                        <option value="easy">🟢 Лёгкая</option>
+                        <option value="medium" selected>🟡 Средняя</option>
+                        <option value="hard">🔴 Сложная</option>
+                        <option value="pro">⚫ Профи</option>
+                    </select>
+                </div>
+                
+                <div class="beats-row">
+                    <button class="beat-btn" data-beats="2">2 такта</button>
+                    <button class="beat-btn active-beat" data-beats="4">4 такта</button>
+                    <button class="beat-btn" data-beats="6">6 тактов</button>
+                    <button class="beat-btn" data-beats="8">8 тактов</button>
+                    <button class="beat-btn" data-beats="10">10 тактов</button>
+                </div>
+                
+                <select id="sound-select">
+                    <option value="kick">🥁 Kick Drum</option>
+                    <option value="snare">🎵 Snare</option>
+                    <option value="hihat">🔔 Hi-Hat</option>
+                    <option value="clap">👏 Clap</option>
+                    <option value="cowbell">🛎️ Cowbell</option>
+                </select>
+                <button id="start-btn" class="glass-btn">🎮 СТАРТ</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+/**
+ * @fileoverview Ритм-тренажёр «Анти ИИ Слепая зона» — версия 3.0
+ * @author Антон Кузнецов
+ */
+
+// ==================== КОНФИГУРАЦИЯ ====================
+const CONFIG = {
+    BPM_BY_DIFFICULTY: { easy: 90, medium: 120, hard: 150, pro: 180 },
+    DIFFICULTY_SETTINGS: {
+        easy:   { perfect: 120, good: 180, hit: 250 },
+        medium: { perfect: 80,  good: 140, hit: 220 },
+        hard:   { perfect: 50,  good: 100, hit: 180 },
+        pro:    { perfect: 30,  good: 70,  hit: 150 }
+    },
+    RHYTHM_PATTERNS: {
+        2: [1, 2, 3, 4],
+        4: [1, 2.5, 3, 4],
+        6: [1, 1.5, 2, 2.5, 3, 3.5, 4],
+        8: [1, 1.75, 2.25, 3, 3.5, 4],
+        10: [1, 2.33, 2.66, 4]
+    },
+    SOUND_PARAMS: {
+        kick: { freq: 60, decay: 0.4, type: 'sine' },
+        snare: { freq: 200, decay: 0.2, type: 'triangle' },
+        hihat: { freq: 8000, decay: 0.05, type: 'square' },
+        clap: { freq: 500, decay: 0.1, type: 'sawtooth' },
+        cowbell: { freq: 800, decay: 0.2, type: 'square' }
+    }
+};
+
+// ==================== ОСНОВНОЙ КЛАСС ====================
+class RhythmApp {
+    constructor() {
+        // DOM элементы
+        this.el = {};
+        
+        // Аудио
+        this.audioCtx = null;
+        this.analyzer = null;
+        this.oscAnimationId = null;
+        
+        // Состояние
+        this.isRunning = false;
+        this.isTrainerRunning = false;
+        this.isBlind = false;
+        this.bpm = CONFIG.BPM_BY_DIFFICULTY.medium;
+        this.selectedBeats = 4;
+        this.currentPattern = CONFIG.RHYTHM_PATTERNS[4];
+        this.difficulty = 'medium';
+        
+        // Статистика
+        this.totalScore = 0;
+        this.totalHits = 0;
+        this.combo = 0;
+        this.bestCombo = parseInt(localStorage.getItem('bestCombo')) || 0;
+        
+        // Таймеры
+        this.schedulerTimerID = null;
+        this.resizeTimeout = null;
+        
+        // Временные переменные
+        this.startTime = 0;
+        this.nextNoteTime = 0;
+        this.lastTickTime = 0;
+        this.tickCount = 0;
+        this.lastFrameTime = 0;
+        
+        this.init();
+    }
+    
+    init() {
+        this.cacheElements();
+        this.bindEvents();
+        this.loadSettings();
+        this.updateBestComboDisplay();
+        this.updateDifficultyBadge();
+        this.initSplash();
+        this.registerServiceWorker();
+        
+        // Инициализация аудио при первом взаимодействии
+        document.addEventListener('pointerdown', () => this.ensureAudio(), { once: true, passive: true });
+    }
+    
+    cacheElements() {
+        this.el = {
+            pages: document.querySelectorAll('.page'),
+            logo: document.getElementById('logo'),
+            photo: document.getElementById('photo'),
+            video: document.getElementById('video'),
+            soundBtn: document.getElementById('soundBtn'),
+            canvas: document.getElementById('oscilloscope'),
+            accuracy: document.getElementById('accuracy'),
+            drift: document.getElementById('drift'),
+            msg: document.getElementById('msg'),
+            drumPad: document.getElementById('drum-pad'),
+            startBtn: document.getElementById('start-btn'),
+            blindCheckbox: document.getElementById('blind-mode'),
+            soundSelect: document.getElementById('sound-select'),
+            difficultySelect: document.getElementById('difficulty-select'),
+            comboBadge: document.getElementById('combo-badge'),
+            bestComboBadge: document.getElementById('best-combo-badge'),
+            difficultyBadge: document.getElementById('difficulty-badge'),
+            beatBtns: document.querySelectorAll('.beat-btn')
+        };
+    }
+    
+    bindEvents() {
+        // Кнопки ритма
+        this.el.beatBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => this.handleBeatSelect(e));
+        });
+        
+        // Кнопка старта
+        if (this.el.startBtn) {
+            this.el.startBtn.onclick = () => this.toggleTrainer();
+        }
+        
+        // Барабан
+        if (this.el.drumPad) {
+            this.el.drumPad.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                this.handleTap();
+            });
+        }
+        
+        // Клавиатура
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && document.activeElement?.tagName !== 'SELECT') {
+                e.preventDefault();
+                this.handleTap();
+            }
+        });
+        
+        // Resize с debounce
+        window.addEventListener('resize', () => {
+            clearTimeout(this.resizeTimeout);
+            this.resizeTimeout = setTimeout(() => this.resizeCanvas(), 100);
+        });
+        window.addEventListener('orientationchange', () => this.resizeCanvas());
+        
+        // Смена сложности
+        if (this.el.difficultySelect) {
+            this.el.difficultySelect.addEventListener('change', (e) => {
+                this.difficulty = e.target.value;
+                this.bpm = CONFIG.BPM_BY_DIFFICULTY[this.difficulty];
+                this.updateDifficultyBadge();
+                this.saveSettings();
+                
+                // Тактильная обратная связь
+                if ("vibrate" in navigator) {
+                    const patterns = { easy: [5], medium: [10], hard: [10,20,10], pro: [20,30,20] };
+                    navigator.vibrate(patterns[this.difficulty] || [5]);
+                }
+            });
+        }
+        
+        // Сохранение настроек
+        ['blindCheckbox', 'soundSelect'].forEach(id => {
+            if (this.el[id]) {
+                this.el[id].addEventListener('change', () => this.saveSettings());
+            }
+        });
+        
+        // Обработка ошибок медиа
+        this.el.photo?.addEventListener('error', () => {
+            console.warn('Не удалось загрузить frame.jpg');
+            this.el.photo.style.display = 'none';
+        });
+        this.el.video?.addEventListener('error', () => {
+            console.warn('Не удалось загрузить cube.mp4');
+        });
+    }
+    
+    goToPage(pageId) {
+        if (pageId !== 'p3') this.stopTrainerImmediately();
+        
+        this.el.pages.forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId)?.classList.add('active');
+        
+        if (this.el.logo) {
+            this.el.logo.style.display = (pageId === 'p1') ? 'none' : 'flex';
+        }
+        
+        if (pageId === 'p3') {
+            setTimeout(() => this.resizeCanvas(), 100);
+        }
+    }
+    
+    stopTrainerImmediately() {
+        if (this.isRunning) {
+            this.isRunning = false;
+            this.isTrainerRunning = false;
+            if (this.schedulerTimerID) {
+                clearTimeout(this.schedulerTimerID);
+                this.schedulerTimerID = null;
+            }
+            if (this.oscAnimationId) {
+                cancelAnimationFrame(this.oscAnimationId);
+                this.oscAnimationId = null;
+            }
+            if (this.el.startBtn) {
+                this.el.startBtn.innerText = '🎮 СТАРТ';
+                this.el.startBtn.classList.remove('stop');
+            }
+        }
+    }
+    
+    openLink(url) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+    }
+    
+    copyPhoneNumber(event) {
+        const phone = "8-920-227-56-76";
+        const btn = event?.currentTarget;
+        
+        navigator.clipboard?.writeText(phone).then(() => {
+            if (!btn) return;
+            const originalText = btn.innerText;
+            btn.innerText = "✅ Скопировано!";
+            setTimeout(() => btn.innerText = originalText, 1500);
+        }).catch(() => {
+            // Fallback
+            const textarea = document.createElement('textarea');
+            textarea.value = phone;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        });
+    }
+    
+    initSplash() {
+        const { photo, video, soundBtn } = this.el;
+        if (!soundBtn) return;
+        
+        const ico = soundBtn.querySelector('.ico');
+        const txt = soundBtn.querySelector('.txt');
+        let soundOn = false;
+        let videoStarted = false;
+        
+        if (video) video.muted = true;
+        
+        const updateBtn = () => {
+            if (!ico || !txt) return;
+            ico.innerText = soundOn ? '🔊' : '🔇';
+            txt.innerText = soundOn ? 'Звук вкл' : 'Вкл звук';
+        };
+        
+        soundBtn.onclick = () => {
+            soundOn = !soundOn;
+            if (video) video.muted = !soundOn;
+            if (soundOn && videoStarted && video?.paused) {
+                video.play().catch(() => {});
+            }
+            updateBtn();
+        };
+        
+        const switchToVideoAndNext = () => {
+            if (videoStarted || !video) return;
+            videoStarted = true;
+            video.style.zIndex = '2';
+            if (photo) photo.style.zIndex = '1';
+            video.play().catch(() => {});
+            setTimeout(() => this.goToPage('p2'), 3000);
+        };
+        
+        setTimeout(switchToVideoAndNext, 2000);
+        if (photo?.complete && photo.naturalWidth > 0) {
+            setTimeout(switchToVideoAndNext, 2000);
+        } else if (photo) {
+            photo.onload = () => setTimeout(switchToVideoAndNext, 2000);
+            photo.onerror = switchToVideoAndNext;
+        }
+        updateBtn();
+    }
+    
+    ensureAudio() {
+        if (this.audioCtx) return this.audioCtx;
+        return this.initAudio();
+    }
+    
+    initAudio() {
+        if (this.audioCtx) return this.audioCtx;
+        
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) {
+                console.warn('Web Audio API не поддерживается');
+                if (this.el.msg) {
+                    this.el.msg.innerHTML = '<span style="color:#e74c3c">⚠️ Аудио недоступно</span>';
+                }
+                return null;
+            }
+            
+            this.audioCtx = new AudioContext();
+            this.analyzer = this.audioCtx.createAnalyser();
+            this.analyzer.fftSize = 2048;
+            this.analyzer.connect(this.audioCtx.destination);
+            this.startOscilloscope();
+            return this.audioCtx;
+        } catch (e) {
+            console.error('Ошибка инициализации аудио:', e);
+            return null;
+        }
+    }
+    
+    playSingleSound(time, isMetro = true) {
+        if (!this.audioCtx) return;
+        
+        const osc = this.audioCtx.createOscillator();
+        const gain = this.audioCtx.createGain();
+        
+        osc.frequency.setValueAtTime(isMetro ? 800 : 150, time);
+        gain.gain.setValueAtTime(0.12, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
+        
+        osc.connect(gain);
+        gain.connect(this.analyzer);
+        
+        osc.start(time);
+        osc.stop(time + 0.08);
+    }
+    
+    playRhythmDemo(beatsCount) {
+        const audioCtx = this.ensureAudio();
+        if (!audioCtx) return;
+        
+        const pattern = CONFIG.RHYTHM_PATTERNS[beatsCount];
+        if (!pattern) return;
+        
+        const actuallyPlay = () => {
+            const startTime = audioCtx.currentTime + 0.2;
+            const beatDuration = 60 / this.bpm;
+            
+            pattern.forEach((beatPos) => {
+                const time = startTime + (beatPos - 1) * beatDuration;
+                const delay = Math.max(0, (time - audioCtx.currentTime) * 1000);
+                
+                setTimeout(() => {
+                    this.playSingleSound(audioCtx.currentTime, true);
+                    this.el.beatBtns.forEach(btn => {
+                        btn.style.transform = 'scale(0.95)';
+                        setTimeout(() => btn.style.transform = '', 100);
+                    });
+                }, delay);
+            });
+            
+            const duration = (Math.max(...pattern) - 1) * beatDuration * 1000;
+            if (this.el.msg) {
+                this.el.msg.innerHTML = `<span style="color:#27ae60">🎵 ДЕМО: ${beatsCount} тактов</span>`;
+                setTimeout(() => {
+                    if (this.el.msg?.innerHTML.includes('ДЕМО')) {
+                        this.el.msg.innerHTML = '';
+                    }
+                }, duration + 500);
+            }
+        };
+        
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume().then(actuallyPlay).catch(() => {});
+        } else {
+            actuallyPlay();
+        }
+    }
+    
+    handleBeatSelect(event) {
+        const btn = event.currentTarget;
+        const beats = parseInt(btn.getAttribute('data-beats'));
+        
+        if (!beats || !CONFIG.RHYTHM_PATTERNS[beats]) return;
+        
+        this.selectedBeats = beats;
+        this.currentPattern = CONFIG.RHYTHM_PATTERNS[beats];
+        
+        this.el.beatBtns.forEach(b => {
+            b.classList.remove('active-beat');
+            b.style.background = 'rgba(30, 30, 30, 0.7)';
+            b.style.borderColor = 'rgba(39, 174, 96, 0.4)';
+            b.style.color = '#27ae60';
+        });
+        
+        btn.classList.add('active-beat');
+        btn.style.background = 'rgba(39, 174, 96, 0.4)';
+        btn.style.borderColor = '#27ae60';
+        btn.style.color = '#fff';
+        
+        this.playRhythmDemo(beats);
+    }
+    
+    playDrumSound() {
+        if (!this.audioCtx) return;
+        
+        const style = this.el.soundSelect?.value || 'kick';
+        const params = CONFIG.SOUND_PARAMS[style] || CONFIG.SOUND_PARAMS.kick;
+        
+        const osc = this.audioCtx.createOscillator();
+        const gain = this.audioCtx.createGain();
+        
+        osc.type = params.type;
+        osc.frequency.setValueAtTime(
+            params.freq * (0.98 + Math.random() * 0.04), 
+            this.audioCtx.currentTime
+        );
+        
+        gain.gain.setValueAtTime(0.25, this.audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + params.decay);
+        
+        osc.connect(gain);
+        gain.connect(this.analyzer);
+        
+        osc.start();
+        osc.stop(this.audioCtx.currentTime + params.decay);
+    }
+    
+    startOscilloscope() {
+        if (!this.analyzer || !this.el.canvas) return;
+        
+        const ctx = this.el.canvas.getContext('2d');
+        if (!ctx) return;
+        
+        const bufferLength = this.analyzer.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        
+        const draw = (timestamp) => {
+            // Проверяем, что страница активна
+            if (!document.getElementById('p3')?.classList.contains('active')) {
+                this.oscAnimationId = requestAnimationFrame(draw);
+                return;
+            }
+            
+            // Throttling до ~60fps
+            if (timestamp - this.lastFrameTime < 16) {
+                this.oscAnimationId = requestAnimationFrame(draw);
+                return;
+            }
+            this.lastFrameTime = timestamp;
+            
+            if (!this.analyzer) {
+                this.oscAnimationId = requestAnimationFrame(draw);
+                return;
+            }
+            
+            this.analyzer.getByteTimeDomainData(dataArray);
+            
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, this.el.canvas.width, this.el.canvas.height);
+            
+            ctx.beginPath();
+            ctx.strokeStyle = '#27ae60';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            
+            const sliceWidth = this.el.canvas.width / bufferLength;
+            let x = 0;
+            
+            for (let i = 0; i < bufferLength; i++) {
+                const v = dataArray[i] / 128.0;
+                const y = v * this.el.canvas.height / 2;
+                
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+                x += sliceWidth;
+            }
+            
+            ctx.stroke();
+            this.oscAnimationId = requestAnimationFrame(draw);
+        };
+        
+        this.oscAnimationId = requestAnimationFrame(draw);
+    }
+    
+    scheduler() {
+        if (!this.isRunning || !this.audioCtx) return;
+        
+        const now = this.audioCtx.currentTime;
+        const beatDuration = 60 / this.bpm;
+        
+        while (this.nextNoteTime < now + 0.1) {
+            this.lastTickTime = this.nextNoteTime;
+            this.tickCount++;
+            
+            const timeSinceStart = this.nextNoteTime - this.startTime;
+            const beatPosition = (timeSinceStart % (4 * beatDuration)) / beatDuration + 1;
+            
+            let shouldPlay = false;
+            for (const patternBeat of this.currentPattern) {
+                if (Math.abs(patternBeat - beatPosition) < 0.05) {
+                    shouldPlay = true;
+                    break;
+                }
+            }
+            
+            const totalBeats = this.selectedBeats * 4;
+            if (this.isBlind && this.tickCount > totalBeats) {
+                if (this.tickCount === totalBeats + 1 && this.el.msg) {
+                    this.el.msg.innerHTML = `<span style="color:#e74c3c">🔇 СЛЕПОЙ РЕЖИМ | ДЕРЖИ РИТМ!</span>`;
+                    setTimeout(() => {
+                        if (this.el.msg?.innerHTML.includes("СЛЕПОЙ")) {
+                            this.el.msg.innerHTML = '';
+                        }
+                    }, 2000);
+                }
+            } else if (shouldPlay) {
+                this.playMetroSound(this.nextNoteTime);
+            }
+            
+            this.nextNoteTime += beatDuration;
+        }
+        
+        this.schedulerTimerID = setTimeout(() => this.scheduler(), 25);
+    }
+    
+    playMetroSound(time) {
+        if (!this.audioCtx) return;
+        
+        const osc = this.audioCtx.createOscillator();
+        const gain = this.audioCtx.createGain();
+        
+        osc.frequency.setValueAtTime(800, time);
+        gain.gain.setValueAtTime(0.08, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
+        
+        osc.connect(gain);
+        gain.connect(this.analyzer);
+        
+        osc.start(time);
+        osc.stop(time + 0.05);
+    }
+    
+    playLevelUpSound(isGold) {
+        if (!this.audioCtx) return;
+        
+        const now = this.audioCtx.currentTime;
+        const osc = this.audioCtx.createOscillator();
+        const gain = this.audioCtx.createGain();
+        
+        const startFreq = isGold ? 880 : 440;
+        const endFreq = isGold ? 1760 : 880;
+        
+        osc.frequency.setValueAtTime(startFreq, now);
+        osc.frequency.exponentialRampToValueAtTime(endFreq, now + 0.2);
+        
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        
+        osc.connect(gain);
+        gain.connect(this.analyzer);
+        
+        osc.start();
+        osc.stop(now + 0.3);
+    }
+    
+    updateCombo(newCombo) {
+        this.combo = newCombo;
+        
+        if (this.combo >= 5 && this.el.comboBadge) {
+            this.el.comboBadge.style.display = 'block';
+            this.el.comboBadge.innerText = `🔥 x${this.combo}`;
+            this.el.comboBadge.style.animation = 'none';
+            setTimeout(() => {
+                if (this.el.comboBadge) {
+                    this.el.comboBadge.style.animation = 'pop 0.3s ease';
+                }
+            }, 10);
+            
+            if (this.combo === 5) this.playLevelUpSound(false);
+            else if (this.combo === 10) this.playLevelUpSound(true);
+            
+            // Используем classList для управления классами
+            if (this.el.drumPad) {
+                this.el.drumPad.classList.remove('combo-5', 'combo-10');
+                if (this.combo >= 10) {
+                    this.el.drumPad.classList.add('combo-10');
+                } else {
+                    this.el.drumPad.classList.add('combo-5');
+                }
+            }
+        } else if (this.el.comboBadge) {
+            this.el.comboBadge.style.display = 'none';
+            if (this.el.drumPad) {
+                this.el.drumPad.classList.remove('combo-5', 'combo-10');
+            }
+        }
+        
+        if (this.combo > this.bestCombo) {
+            this.bestCombo = this.combo;
+            localStorage.setItem('bestCombo', this.bestCombo);
+            this.updateBestComboDisplay();
+        }
+    }
+    
+    updateBestComboDisplay() {
+        if (this.el.bestComboBadge) {
+            this.el.bestComboBadge.innerText = `🏆 x${this.bestCombo}`;
+        }
+    }
+    
+    updateDifficultyBadge() {
+        if (!this.el.difficultyBadge) return;
+        const icons = { easy: '🟢', medium: '🟡', hard: '🔴', pro: '⚫' };
+        const names = { easy: 'Лёгкая', medium: 'Средняя', hard: 'Сложная', pro: 'Профи' };
+        this.el.difficultyBadge.innerText = `${icons[this.difficulty]} ${names[this.difficulty]}`;
+    }
+    
+    handleTap() {
+        // Мягкая инициализация аудио
+        if (!this.audioCtx) {
+            this.ensureAudio();
+            if (!this.audioCtx) {
+                if (this.el.msg) {
+                    this.el.msg.innerHTML = '<span style="color:#e74c3c">⚠️ Аудио недоступно</span>';
+                }
+                return;
+            }
+        }
+        
+        this.playDrumSound();
+        
+        // Вибрация
+        if ("vibrate" in navigator) {
+            if (this.audioCtx) {
+                const diff = Math.abs(this.audioCtx.currentTime - this.lastTickTime) * 1000;
+                if (diff < 30) navigator.vibrate([10, 30, 10]);
+                else if (diff < 70) navigator.vibrate(20);
+                else navigator.vibrate([50, 30, 50]);
+            } else {
+                navigator.vibrate(10);
+            }
+        }
+        
+        // Визуальный эффект
+        if (this.el.drumPad) {
+            this.el.drumPad.classList.add('active');
+            setTimeout(() => {
+                if (this.el.drumPad) {
+                    this.el.drumPad.classList.remove('active');
+                }
+            }, 60);
+        }
+        
+        if (!this.isRunning) return;
+        
+        const now = this.audioCtx.currentTime;
+        const diff = Math.abs(now - this.lastTickTime) * 1000;
+        const limits = CONFIG.DIFFICULTY_SETTINGS[this.difficulty];
+        
+        let points = 0, feedback = '', color = '';
+        
+        if (diff < limits.perfect) { 
+            points = 100; feedback = '🎯 ИДЕАЛЬНО!'; color = 'perfect'; 
+            this.updateCombo(this.combo + 1); 
+        }
+        else if (diff < limits.good) { 
+            points = 70; feedback = '👍 ХОРОШО'; color = 'good'; 
+            this.updateCombo(0); 
+        }
+        else if (diff < limits.hit) { 
+            points = 40; feedback = '⚡ ПОПАЛ'; color = 'hit'; 
+            this.updateCombo(0); 
+        }
+        else { 
+            points = 0; feedback = '😅 МИМО'; color = 'miss'; 
+            this.updateCombo(0); 
+        }
+        
+        this.totalHits++;
+        this.totalScore += points;
+        const accuracy = Math.round(this.totalScore / this.totalHits);
+        
+        if (this.el.accuracy) this.el.accuracy.innerText = accuracy + '%';
+        if (this.el.drift) this.el.drift.innerText = Math.round(diff) + 'мс';
+        if (this.el.msg) {
+            this.el.msg.innerHTML = `<span class="${color}">${feedback}</span>`;
+            setTimeout(() => {
+                if (this.el.msg?.innerHTML.includes(feedback)) {
+                    this.el.msg.innerHTML = '';
+                }
+            }, 500);
+        }
+    }
+    
+    toggleTrainer() {
+        if (this.isRunning) {
+            this.stopTrainerImmediately();
+            if (this.el.msg) {
+                this.el.msg.innerHTML = '<span style="color:#888">✅ Тренировка завершена</span>';
+            }
+            return;
+        }
+        
+        const audioCtx = this.ensureAudio();
+        if (!audioCtx) return;
+        
+        const resumeAndStart = () => {
+            this.isRunning = true;
+            this.isTrainerRunning = true;
+            this.tickCount = 0;
+            this.totalScore = 0;
+            this.totalHits = 0;
+            this.combo = 0;
+            this.updateCombo(0);
+            
+            if (this.el.accuracy) this.el.accuracy.innerText = '0%';
+            if (this.el.drift) this.el.drift.innerText = '0мс';
+            if (this.el.msg) this.el.msg.innerHTML = '';
+            
+            this.isBlind = this.el.blindCheckbox?.checked || false;
+            this.bpm = CONFIG.BPM_BY_DIFFICULTY[this.difficulty];
+            this.startTime = audioCtx.currentTime + 0.1;
+            this.nextNoteTime = this.startTime;
+            this.lastTickTime = this.nextNoteTime;
+            
+            this.scheduler();
+            
+            if (this.el.startBtn) {
+                this.el.startBtn.innerText = '⏹️ СТОП';
+                this.el.startBtn.classList.add('stop');
+            }
+            
+            const names = { easy: '🟢 Лёгкая', medium: '🟡 Средняя', hard: '🔴 Сложная', pro: '⚫ Профи' };
+            if (this.el.msg) {
+                this.el.msg.innerHTML = `<span style="color:#27ae60">🎵 ${this.selectedBeats} тактов | ${names[this.difficulty]}</span>`;
+                setTimeout(() => {
+                    if (this.el.msg?.innerHTML.includes('тактов')) {
+                        this.el.msg.innerHTML = '';
+                    }
+                }, 2500);
+            }
+        };
+        
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume().then(resumeAndStart).catch(() => {});
+        } else {
+            resumeAndStart();
+        }
+    }
+    
+    resizeCanvas() {
+        if (!this.el.canvas) return;
+        const container = document.querySelector('.oscilloscope-wrapper');
+        if (!container || container.clientWidth <= 0) return;
+        
+        const dpr = window.devicePixelRatio || 1;
+        const rect = container.getBoundingClientRect();
+        
+        this.el.canvas.width = rect.width * dpr;
+        this.el.canvas.height = 60 * dpr;
+        this.el.canvas.style.width = rect.width + 'px';
+        this.el.canvas.style.height = '60px';
+        
+        const ctx = this.el.canvas.getContext('2d');
+        if (ctx) ctx.scale(dpr, dpr);
+    }
+    
+    loadSettings() {
+        try {
+            const saved = JSON.parse(localStorage.getItem('drumSettings') || '{}');
+            if (saved.sound && this.el.soundSelect) {
+                this.el.soundSelect.value = saved.sound;
+            }
+            if (saved.blindMode !== undefined && this.el.blindCheckbox) {
+                this.el.blindCheckbox.checked = saved.blindMode;
+            }
+            if (saved.difficulty && CONFIG.DIFFICULTY_SETTINGS[saved.difficulty]) {
+                this.difficulty = saved.difficulty;
+                this.bpm = CONFIG.BPM_BY_DIFFICULTY[this.difficulty];
+                if (this.el.difficultySelect) {
+                    this.el.difficultySelect.value = this.difficulty;
+                }
+            }
+            if (saved.beats && CONFIG.RHYTHM_PATTERNS[saved.beats]) {
+                this.selectedBeats = saved.beats;
+                this.currentPattern = CONFIG.RHYTHM_PATTERNS[saved.beats];
+            }
+        } catch (e) {
+            console.warn('Не удалось загрузить настройки:', e);
+        }
+    }
+    
+    saveSettings() {
+        try {
+            const settings = {
+                sound: this.el.soundSelect?.value || 'kick',
+                blindMode: this.el.blindCheckbox?.checked || false,
+                difficulty: this.difficulty,
+                beats: this.selectedBeats
+            };
+            localStorage.setItem('drumSettings', JSON.stringify(settings));
+        } catch (e) {
+            console.warn('Не удалось сохранить настройки:', e);
+        }
+    }
+    
+    registerServiceWorker() {
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                const CACHE_NAME = 'anti-ai-blind-v3';
+                const ASSETS = ['/', '/index.html'];
+                self.addEventListener('install', (e) => {
+                    e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)));
+                    self.skipWaiting();
+                });
+                self.addEventListener('activate', (e) => {
+                    e.waitUntil(caches.keys().then(names => 
+                        Promise.all(names.filter(n => n !== CACHE_NAME).map(n => caches.delete(n)))
+                    ));
+                    self.clients.claim();
+                });
+                self.addEventListener('fetch', (e) => {
+                    if (e.request.mode === 'navigate') {
+                        e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+                    }
+                });
+            `;
+            try {
+                const blob = new Blob([swCode], { type: 'text/javascript' });
+                navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+            } catch (e) {
+                console.warn('SW registration failed:', e);
+            }
+        }
+    }
+}
+
+// ==================== ИНИЦИАЛИЗАЦИЯ ====================
+let app;
+document.addEventListener('DOMContentLoaded', () => {
+    app = new RhythmApp();
+});
+if (document.readyState !== 'loading' && !app) {
+    app = new RhythmApp();
+}
+</script>
+</body>
+</html>
