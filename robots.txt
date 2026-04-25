@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Sitemap: https://anti-ai-blind-zone.vercel.app/sitemap.xml
+
+# Запрещаем индексацию служебных файлов
+Disallow: /favicon.ico
+Disallow: /*.mp4$
