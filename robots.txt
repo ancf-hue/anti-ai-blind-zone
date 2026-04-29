@@ -1,7 +1,35 @@
+# robots.txt для anti-ai-blind-zone.vercel.app
+# Оптимизирован для Яндекс и Google
+
 User-agent: *
 Allow: /
+
+# Указываем главное зеркало сайта (без www)
+Host: anti-ai-blind-zone.vercel.app
+
+# Где лежит карта сайта (ускоряет обнаружение всех страниц)
 Sitemap: https://anti-ai-blind-zone.vercel.app/sitemap.xml
 
-# Запрещаем индексацию служебных файлов
+# Краулинг-задержка для щадящего режима (не обязательно, но вежливо)
+Crawl-delay: 0.5
+
+# Запрещаем индексацию служебных/технических страниц (если они есть)
+Disallow: /api/
+Disallow: /_next/
+Disallow: /static/
 Disallow: /favicon.ico
-Disallow: /*.mp4$
+Disallow: /404.html
+
+# Для Яндекса — дополнительные настройки
+User-agent: Yandex
+Allow: /
+Crawl-delay: 0.3
+
+# Для Google
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0.3
+
+# Запрещаем индекс вレスポンス (если есть дубли с параметрами)
+Disallow: /*?*
+Disallow: /*.json$
